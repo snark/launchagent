@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 import plistlib
 import launchd
 import os
-import six
 
 _USER = launchd.plist.USER
 
