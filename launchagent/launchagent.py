@@ -165,15 +165,13 @@ class LaunchAgent(object):
     # launchagent's properties outside those defined by a LaunchAgent plist
     def is_loaded(self):
         """
-        Indicator of whether the configuration file for this LaunchAgent
+        Boolean indicating whether the configuration file for this LaunchAgent
         has been loaded.
         """
         return launchd.LaunchdJob(self.label).exists()
 
     def job(self):
-        """
-        The launchd.LaunchdJob for this LaunchAgent.
-        """
+        """The launchd.LaunchdJob for this LaunchAgent."""
         if self.is_loaded:
             return launchd.LaunchdJob(self.label)
         else:
@@ -181,29 +179,21 @@ class LaunchAgent(object):
 
     # Actions
     def write(self):
-        """
-        Generate a plist file for this LaunchAgent.
-        """
+        """Generate a plist file for this LaunchAgent."""
         launchd.plist.write(self.label, self.plist)
 
     def load(self):
-        """
-        Load this LaunchAgent if not already loaded.
-        """
+        """Load this LaunchAgent if not already loaded."""
         if not self.is_loaded():
             launchd.cmd.launchctl("load", self.plist_filepath)
 
     def unload(self):
-        """
-        Unload this LaunchAgent if loaded.
-        """
+        """Unload this LaunchAgent if loaded."""
         if self.is_loaded():
             launchd.cmd.launchctl("unload", self.plist_filepath)
 
     def reload(self):
-        """
-        Reload this LaunchAgent.
-        """
+        """Reload this LaunchAgent."""
         self.unload()
         self.load()
 
