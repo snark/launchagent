@@ -6,7 +6,7 @@ import six
 
 _USER = launchd.plist.USER
 
-_INTERVALS = {'Minute', 'Hour', 'Day', 'Weekday', 'Month'}
+_INTERVALS = {"Minute", "Hour", "Day", "Weekday", "Month"}
 
 # man launchd.plist
 
@@ -28,10 +28,10 @@ def _constraint_to_string(t):
     if isinstance(t, _string_type):
         return t
     elif isinstance(t, list) and len(t) == 1:
-        return '[%s]' % _constraint_to_string(t[0])
+        return "[%s]" % _constraint_to_string(t[0])
     elif isinstance(t, dict) and len(t) == 1:
         k, v = list(t.items())[0]
-        return '{%s:%s}' % (_constraint_to_string(k), _constraint_to_string(v))
+        return "{%s:%s}" % (_constraint_to_string(k), _constraint_to_string(v))
 
 
 def _verify_type_constraint(v, t):
@@ -60,7 +60,7 @@ def _property_factory(prop_name, signature, doc=None):
     def fset(la, val):
         if not _verify_type_constraint(val, signature):
             raise TypeError(
-                'LaunchAgent\'s {} property must match {}'
+                "LaunchAgent\"s {} property must match {}"
                 .format(prop_name, _constraint_to_string(signature))
             )
         la.plist[prop_name] = val
@@ -73,12 +73,16 @@ def _property_factory(prop_name, signature, doc=None):
 
 class LaunchAgent(object):
     def __init__(self, label):
-        # plist generation must occur first so that our properties
-        # have a place to live
-        self.plist_filepath = os.path.expanduser(os.path.join(
-            launchd.plist.PLIST_LOCATIONS[_USER],
-            "{}.plist".format(label)
-        ))
+        if label.endswith(".plist"):
+            self.plist_filepath = label
+            label = self.plist_filepath[0:-7]
+        else:
+            # plist generation must occur first so that our properties
+            # have a place to live
+            self.plist_filepath = os.path.expanduser(os.path.join(
+                launchd.plist.PLIST_LOCATIONS[_USER],
+                "{}.plist".format(label)
+            ))
         if os.path.isfile(self.plist_filepath):
             self.plist = launchd.plist.read(label, _USER)
         else:
@@ -86,33 +90,33 @@ class LaunchAgent(object):
 
         self.label = label
 
-    label = _property_factory('Label', _string_type)
-    program = _property_factory('Program', _string_type)
-    program_arguments = _property_factory('ProgramArguments', [_string_type])
+    label = _property_factory("Label", _string_type)
+    program = _property_factory("Program", _string_type)
+    program_arguments = _property_factory("ProgramArguments", [_string_type])
 
-    disabled = _property_factory('Disabled', bool)
-    user_name = _property_factory('UserName', _string_type)
-    group_name = _property_factory('GroupName', _string_type)
+    disabled = _property_factory("Disabled", bool)
+    user_name = _property_factory("UserName", _string_type)
+    group_name = _property_factory("GroupName", _string_type)
     limit_load_to_hosts = _property_factory(
-        'LimitListToHosts', [_string_type])
+        "LimitListToHosts", [_string_type])
     limit_load_from_hosts = _property_factory(
-        'LimitListFromHosts', [_string_type])
+        "LimitListFromHosts", [_string_type])
     limit_load_to_session_type = _property_factory(
-        'LimitLoadToSessionType', _string_type)
-    nice = _property_factory('nice', int)
-    enable_globbing = _property_factory('EnableGlobbing', bool)
-    enable_transactions = _property_factory('EnableTransactions', bool)
-    enable_pressured_exit = _property_factory('EnablePressuredExit', bool)
-    run_at_load = _property_factory('RunAtLoad', bool)
-    root_directory = _property_factory('RootDirectory', _string_type)
-    working_directory = _property_factory('WorkingDirectory', _string_type)
+        "LimitLoadToSessionType", _string_type)
+    nice = _property_factory("nice", int)
+    enable_globbing = _property_factory("EnableGlobbing", bool)
+    enable_transactions = _property_factory("EnableTransactions", bool)
+    enable_pressured_exit = _property_factory("EnablePressuredExit", bool)
+    run_at_load = _property_factory("RunAtLoad", bool)
+    root_directory = _property_factory("RootDirectory", _string_type)
+    working_directory = _property_factory("WorkingDirectory", _string_type)
     environment_variables = _property_factory(
-        'EnvironmentVariables', {str: str})
-    time_out = _property_factory('TimeOut', int)
-    exit_time_out = _property_factory('ExitTimeOut', int)
-    throttle_interval = _property_factory('ThrottleInterval', int)
+        "EnvironmentVariables", {str: str})
+    time_out = _property_factory("TimeOut", int)
+    exit_time_out = _property_factory("ExitTimeOut", int)
+    throttle_interval = _property_factory("ThrottleInterval", int)
     start_interval = _property_factory(
-        'StartInterval', int, """
+        "StartInterval", int, """
         The StartInternval property of the LaunchAgent causes launchd
         to start the job every N seconds.
         """
@@ -128,7 +132,7 @@ class LaunchAgent(object):
         LaunchAgent job every specified interval. See `man launchd.plist`
         for additional details
         """
-        return self.plist['StartCalendarInterval']
+        return self.plist["StartCalendarInterval"]
 
     @start_calendar_interval.setter
     def start_calendar_interval(self, val):
@@ -144,45 +148,70 @@ class LaunchAgent(object):
             invalid = True
         if invalid:
             raise TypeError(
-                'The StartCalendarInterval property of the LaunchAgent '
-                'must be a dict or a list of dicts, with dict keys '
-                'indicating the period.'
+                "The StartCalendarInterval property of the LaunchAgent "
+                "must be a dict or a list of dicts, with dict keys "
+                "indicating the period."
             )
-        self.plist['StartCalendarInterval'] = val
+        self.plist["StartCalendarInterval"] = val
 
     @start_calendar_interval.deleter
     def start_calendar_interval(self):
-        del self.plist['StartCalendarInterval']
+        del self.plist["StartCalendarInterval"]
 
     def _validate_calendar_interval(self, v):
         return isinstance(v, dict) and set(v.keys()).issubset(_INTERVALS) and\
             set([type(entry) for entry in v.values()]).issubset({int})
 
-    def __str__(self):
-        return "<LaunchAgent: {}>".format(self.label)
+    # launchagent's properties outside those defined by a LaunchAgent plist
+    def is_loaded(self):
+        """
+        Indicator of whether the configuration file for this LaunchAgent
+        has been loaded.
+        """
+        return launchd.LaunchdJob(self.label).exists()
 
-    # actions
-    def load(self):
-        launchd.cmd.launchctl("load", self.plist_filepath)
+    def job(self):
+        """
+        The launchd.LaunchdJob for this LaunchAgent.
+        """
+        if self.is_loaded:
+            return launchd.LaunchdJob(self.label)
+        else:
+            return None
 
-    def start(self):
-        if launchd.LaunchdJob(self.label).exists():
-            launchd.cmd.launchctl("start", self.label)
-
-    def stop(self):
-        if launchd.LaunchdJob(self.label).exists():
-            launchd.cmd.launchctl("stop", self.label)
-
-    def restart(self):
-        self.stop()
-        self.load()
-        self.start()
-
+    # Actions
     def write(self):
+        """
+        Generate a plist file for this LaunchAgent.
+        """
         launchd.plist.write(self.label, self.plist)
 
+    def load(self):
+        """
+        Load this LaunchAgent if not already loaded.
+        """
+        if not self.is_loaded():
+            launchd.cmd.launchctl("load", self.plist_filepath)
+
+    def unload(self):
+        """
+        Unload this LaunchAgent if loaded.
+        """
+        if self.is_loaded():
+            launchd.cmd.launchctl("unload", self.plist_filepath)
+
+    def reload(self):
+        """
+        Reload this LaunchAgent.
+        """
+        self.unload()
+        self.load()
+
+    # Internal
     def _validate(self):
-        # Must have label
-        # Must have either Program or ProgramArguments
         # UserName and GroupName are meaningless outside root context
-        pass
+        # but we are not currently checking for this.
+        return self.label and (self.program or self.program_arguments)
+
+    def __str__(self):
+        return "<LaunchAgent: {}>".format(self.label)
