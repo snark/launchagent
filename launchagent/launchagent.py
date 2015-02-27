@@ -120,6 +120,16 @@ class LaunchAgent(object):
         to start the job every N seconds.
         """
     )
+    init_groups = _property_factory("InitGroups", int)
+    start_on_mount = _property_factory("StartOnMount", int)
+    standard_in_path = _property_factory("StandardInPath", _string_type)
+    standard_out_path = _property_factory("StandardOutPath", _string_type)
+    standard_error_path = _property_factory("StandardErrorPath", _string_type)
+    debug = _property_factory("Debug", bool)
+    wait_for_debug = _property_factory("WaitForDebugger", bool)
+    abandon_process_group = _property_factory("AbandonProcessGroup", bool)
+    low_priority_io = _property_factory("LowPriorityIO", bool)
+    launch_only_once = _property_factory("LaunchOnlyOnce", bool)
 
     # Some properties which require additional validation or handling
     @property
@@ -200,6 +210,7 @@ class LaunchAgent(object):
     def _validate(self):
         # UserName and GroupName are meaningless outside root context
         # but we are not currently checking for this.
+        # InitGroups is meaningless if UserName is unset
         return self.label and (self.program or self.program_arguments)
 
     def __str__(self):
