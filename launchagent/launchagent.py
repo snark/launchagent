@@ -148,11 +148,11 @@ class LaunchAgent(object):
         invalid = False
         if isinstance(val, list):
             for v in val:
-                if not self._validate_calendar_interval(v):
+                if not self.__validate_calendar_interval(v):
                     invalid = True
                     break
         elif isinstance(val, dict):
-            invalid = not self._validate_calendar_interval(val)
+            invalid = not self.__validate_calendar_interval(val)
         else:
             invalid = True
         if invalid:
@@ -163,13 +163,66 @@ class LaunchAgent(object):
             )
         self.plist["StartCalendarInterval"] = val
 
+    def __validate_calendar_interval(self, v):
+        return isinstance(v, dict) and set(v.keys()).issubset(_INTERVALS) and\
+            set([type(entry) for entry in v.values()]).issubset({int})
+
     @start_calendar_interval.deleter
     def start_calendar_interval(self):
         del self.plist["StartCalendarInterval"]
 
-    def _validate_calendar_interval(self, v):
-        return isinstance(v, dict) and set(v.keys()).issubset(_INTERVALS) and\
-            set([type(entry) for entry in v.values()]).issubset({int})
+    @property
+    def umask(self):
+        """
+        A value specifying what key should passed to umask before running
+        the LaunchAgent's job.
+        """
+        return self.plist["Umask"]
+
+    @umask.setter
+    def umask(self, val):
+        if not isinstance(val, int) or val < 0 or val > 511:
+            raise TypeError(
+                """
+                umask value must be an integer corresponsding to
+                a valid three-digit octal mask.
+                """
+            )
+        self.plist["Umask"] = val
+
+    @umask.deleter
+    def umask(self):
+        del self.plist["Umask"]
+
+    @property
+    def inetd_compatibility(self):
+        """
+        The inetdCompatibility property of the LaunchAgent, indicating
+        that the daemon expects to be run as if it were launched from inetd.
+        """
+        return self.plist["inetdCompatibility"]
+
+    @inetd_compatibility.setter
+    def inetd_compatibility(self, val):
+        if not isinstance(val, dict) or len(val.keys()) != 1 or\
+                ("Wait" not in dict):
+            if not isinstance(val, bool):
+                raise TypeError(
+                    """
+                    The inetdCompatibility property must be a dictionary
+                    with a single key, "Wait", associated with a boolean
+                    value, or, as a convenience setter, the boolean
+                    directly.
+                    """
+                )
+        if isinstance(val, dict):
+            self.plist["inetdCompatibility"] = val
+        else:
+            self.plist["inetdCompatibility"] = {"Wait": val}
+
+    @inetd_compatibility.deleter
+    def start_calendar_interval(self):
+        del self.plist["StartCalendarInterval"]
 
     # launchagent's properties outside those defined by a LaunchAgent plist
     def is_loaded(self):
@@ -206,12 +259,13 @@ class LaunchAgent(object):
         self.unload()
         self.load()
 
-    # Internal
-    def _validate(self):
-        # UserName and GroupName are meaningless outside root context
-        # but we are not currently checking for this.
-        # InitGroups is meaningless if UserName is unset
+    def is_valid(self):
+        """
+        Return a value indicating the the contextual validity of
+        the values assigned to this LaunchAgent.
+        """
         return self.label and (self.program or self.program_arguments)
 
+    # Internal
     def __str__(self):
         return "<LaunchAgent: {}>".format(self.label)
