@@ -175,7 +175,6 @@ class LaunchAgent(object):
     def umask(self):
         """
         A value specifying what key should passed to umask before running
-        try:
         the LaunchAgent's job.
         """
         return self.plist["Umask"]
