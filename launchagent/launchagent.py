@@ -175,6 +175,7 @@ class LaunchAgent(object):
     def umask(self):
         """
         A value specifying what key should passed to umask before running
+        try:
         the LaunchAgent's job.
         """
         return self.plist["Umask"]
@@ -193,6 +194,51 @@ class LaunchAgent(object):
     @umask.deleter
     def umask(self):
         del self.plist["Umask"]
+
+    @property
+    def keep_alive(self):
+        """
+        A value specifying whether the job should be run continuously; the
+        value is either a boolean (with true indicating that the job should be
+        run continuously and false indicating that the job should be run only
+        on demand) or a dictionary indicating conditions under which launchd
+        should keep the job alive. See the launchd.plist manpage for full
+        details.
+        """
+        return self.plist["KeepAlive"]
+
+    @keep_alive.setter
+    def keep_alive(self, val):
+        error_message = """
+            The KeepAlive property must be a boolean or a dictionary with
+            certain specified keys and values.
+            """
+        if isinstance(val, bool):
+            pass
+        elif isinstance(val, dict):
+            for (k, v) in val.items():
+                if k in {"SuccessfulExit", "Crashed", "NetworkState"}:
+                    if isinstance(v, bool):
+                        pass
+                    else:
+                        raise TypeError(error_message)
+                elif k in {"PathState", "OtherJobEnabled"}:
+                    if isinstance(v, dict):
+                        for (sub_k, sub_v) in v.items():
+                            if isinstance(sub_k, _string_type) and \
+                                    isinstance(sub_v, bool):
+                                pass
+                            else:
+                                raise TypeError(error_message)
+                        else:
+                            raise TypeError(error_message)
+                else:
+                    raise TypeError(error_message)
+        self.plist["KeepAlive"] = val
+
+    @keep_alive.deleter
+    def keep_alive(self):
+        del self.plist["KeepAlive"]
 
     @property
     def inetd_compatibility(self):
