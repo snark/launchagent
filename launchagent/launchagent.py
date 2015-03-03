@@ -266,8 +266,8 @@ class LaunchAgent(object):
             self.plist["inetdCompatibility"] = {"Wait": val}
 
     @inetd_compatibility.deleter
-    def start_calendar_interval(self):
-        del self.plist["StartCalendarInterval"]
+    def inetd_compatibility(self):
+        del self.plist["inetdCompatibility"]
 
     # launchagent's properties outside those defined by a LaunchAgent plist
     def is_loaded(self):
