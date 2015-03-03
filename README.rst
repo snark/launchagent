@@ -2,9 +2,6 @@
 launchagent
 ===============================
 
-.. image:: https://img.shields.io/travis/snark/launchagent.svg
-        :target: https://travis-ci.org/snark/launchagent
-
 .. image:: https://img.shields.io/pypi/v/launchagent.svg
         :target: https://pypi.python.org/pypi/launchagent
 
