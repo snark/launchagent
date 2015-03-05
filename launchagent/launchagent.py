@@ -130,6 +130,8 @@ class LaunchAgent(object):
     abandon_process_group = _property_factory("AbandonProcessGroup", bool)
     low_priority_io = _property_factory("LowPriorityIO", bool)
     launch_only_once = _property_factory("LaunchOnlyOnce", bool)
+    watch_paths = _property_factory("WatchPaths", [_string_type])
+    queue_directories = _property_factory("QueueDirectories", [_string_type])
 
     # Some properties which require additional validation or handling
     @property
